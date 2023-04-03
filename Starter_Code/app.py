@@ -6,6 +6,7 @@ import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import func, create_engine
+from scipy import stats
 
 #################################################
 # Database Setup
@@ -28,8 +29,6 @@ session = Session(engine)
 #################################################
 app = Flask(__name__)
 
-
-
 #################################################
 # Flask Routes
 #################################################
@@ -39,7 +38,9 @@ app = Flask(__name__)
 def home():
     return(f"/api/v1.0/precipitation <br>"
            f"/api/v1.0/stations <br>"
-           f"/api/v1.0/tobs <br>")
+           f"/api/v1.0/tobs <br>"
+           f"/api/v1.0/start/start_date <br>"
+           f"/api/v1.0/start_end/<start_date>-<end_dates>")
 
 # Precipitation Route
 @app.route("/api/v1.0/precipitation")
@@ -113,9 +114,68 @@ def tobs():
    # Return a JSON list of temperature observations for the previous year.
     return jsonify(tobsList)
     
-#@app.route("/api/v1.0/tobs")
+@app.route("/api/v1.0/start/<start_date>")
+def start(start_date):
+     print(f"Request received for start date...")
+     
+     results = session.query(measurement.tobs).\
+            filter (measurement.date >= start_date).\
+            filter (measurement.tobs != 'None' and measurement.tobs !='bb').all()
+     
+     session.close()
 
-# 2. Convert the query results from your precipitation analysis to dictionary using
-# data as the key and prcp as the value
+     # append the temp observations to list
+     
+     results = np.ravel(results)
+    
+     tobsList = []
+     r = []
+
+     for tobs in results:
+        tobs_dict = {}
+
+        tobsList.append(tobs)
+
+     tobs_dict['min'] = stats.tmin(tobsList)
+     tobs_dict['avg'] = stats.tmean(tobsList)
+     tobs_dict['max'] = stats.tmax(tobsList)
+
+     r.append(tobs_dict)
+
+     return jsonify(r)
+
+
+@app.route("/api/v1.0/start_end/<start_date>-<end_date>")
+def start_end(start_date,end_date):
+     print(f"Request received for enddate...")
+     
+     results = session.query(measurement.tobs).\
+            filter (measurement.date >= start_date).\
+            filter (measurement.date >= end_date).\
+            filter (measurement.tobs != 'None' and measurement.tobs !='bb').all()
+     
+     session.close()
+     
+     # append the temp observations to list
+     
+     results = np.ravel(results)
+    
+     tobsList = []
+     r = []
+
+     for tobs in results:
+        tobs_dict = {}
+
+        tobsList.append(tobs)
+
+     tobs_dict['min'] = stats.tmin(tobsList)
+     tobs_dict['avg'] = stats.tmean(tobsList)
+     tobs_dict['max'] = stats.tmax(tobsList)
+
+     r.append(tobs_dict)
+
+     return jsonify(r)
+
+
 if __name__ == "__main__":
     app.run(debug=True) 
