@@ -39,8 +39,8 @@ def home():
     return(f"/api/v1.0/precipitation <br>"
            f"/api/v1.0/stations <br>"
            f"/api/v1.0/tobs <br>"
-           f"/api/v1.0/start/start_date <br>"
-           f"/api/v1.0/start_end/<start_date>-<end_dates>")
+           f"/api/v1.0/start/Enter State Date Format (yyyy-mm-dd) <br>"
+           f"/api/v1.0/start/end/Enter State Date Format (yyyy-mm-dd)/Enter End Date Format (yyyy-mm-dd)")
 
 # Precipitation Route
 @app.route("/api/v1.0/precipitation")
@@ -114,12 +114,12 @@ def tobs():
    # Return a JSON list of temperature observations for the previous year.
     return jsonify(tobsList)
     
-@app.route("/api/v1.0/start/<start_date>")
-def start(start_date):
+@app.route("/api/v1.0/start/<start>")
+def start(start):
      print(f"Request received for start date...")
      
      results = session.query(measurement.tobs).\
-            filter (measurement.date >= start_date).\
+            filter (measurement.date >= start).\
             filter (measurement.tobs != 'None' and measurement.tobs !='bb').all()
      
      session.close()
@@ -145,13 +145,13 @@ def start(start_date):
      return jsonify(r)
 
 
-@app.route("/api/v1.0/start_end/<start_date>-<end_date>")
-def start_end(start_date,end_date):
+@app.route("/api/v1.0/start/end/<start>/<end>")
+def end(start, end):
      print(f"Request received for enddate...")
      
      results = session.query(measurement.tobs).\
-            filter (measurement.date >= start_date).\
-            filter (measurement.date >= end_date).\
+            filter (measurement.date >= start).\
+            filter (measurement.date >= end).\
             filter (measurement.tobs != 'None' and measurement.tobs !='bb').all()
      
      session.close()
